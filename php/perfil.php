@@ -33,31 +33,23 @@ $iniciais = strtoupper(mb_substr($usuario['nome'], 0, 1));
 <head>
     <meta charset="UTF-8">
     <title>Meu Perfil</title>
-    <link rel="stylesheet" href="style.css">
 </head>
 <body>
  
-    <main class="profile-card">
+    <main>
  
-        <h1 class="profile-name"><?= $nome ?></h1>
-        <p class="profile-email"><?= $email ?></p>
+        <h1><?= $nome ?></h1>
  
-        <dl class="profile-details">
-            <div class="profile-row">
-                <dt>Nome</dt>
-                <dd><?= $nome ?></dd>
-            </div>
-            <div class="profile-row">
+        <dl>
+            <div>
                 <dt>E-mail</dt>
                 <dd><?= $email ?></dd>
             </div>
-            <div class="profile-row">
+            <div>
                 <dt>Membro desde</dt>
                 <dd><?= $membroDesde ?></dd>
             </div>
         </dl>
- 
-        <a href="logout.php" class="profile-logout">Sair</a>
     </main>
  
 </body>
