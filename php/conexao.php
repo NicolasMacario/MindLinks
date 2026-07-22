@@ -1,18 +1,20 @@
 <?php
 // config/conexao.php
- 
-define('DB_HOST', '127.0.0.1:3312');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'mindlinks');
- 
+
+$env = parse_ini_file(__DIR__ . '/../.env');
+
+define('DB_HOST', $env['DB_HOST']);
+define('DB_USER', $env['DB_USER']);
+define('DB_PASS', $env['DB_PASS']);
+define('DB_NAME', $env['DB_NAME']);
+
 define('SITE_URL', 'http://localhost/mindlinks/php');
-define('SMTP_HOST', 'smtp.gmail.com');
-define('SMTP_USER', 'mindlinkstm@gmail.com');  // seu e-mail
-define('SMTP_PASS', 'vnls gdvl mbhl nqms'); // sua Senha de App
-define('SMTP_PORT', 587);
-define('SMTP_FROM_NAME', 'Mindlinks');
- 
+define('SMTP_HOST', $env['SMTP_HOST']);
+define('SMTP_USER', $env['SMTP_USER']);
+define('SMTP_PASS', $env['SMTP_PASS']);
+define('SMTP_PORT', $env['SMTP_PORT']);
+define('SMTP_FROM_NAME', $env['SMTP_FROM_NAME']);
+
 function conectar(): PDO {
     static $pdo = null;
     if ($pdo === null) {
@@ -33,4 +35,3 @@ function conectar(): PDO {
     }
     return $pdo;
 }
-?>

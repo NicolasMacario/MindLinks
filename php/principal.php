@@ -32,6 +32,7 @@ $usuario = $_SESSION['usuario'];
             <?= htmlspecialchars($usuario['email']) ?>
         </p>
 
+        <a href="perfil.php" class="btn">Ir para a tela de perfil</a>
     </div>
 </div>
 </body>

@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$email]);
         $usuario = $stmt->fetch();
 
-        if (!$usuario || $usuario['senha'] !== $senha) {
+        if (!$usuario || !password_verify($senha, $usuario['senha'])) {
             $erro = 'E-mail ou senha incorretos.';
         } else {
             $_SESSION['usuario'] = [

@@ -26,8 +26,10 @@
             if ($stmt->fetch()) {
                 $erro = 'Este e-mail já está cadastrado.';
             } else {
+                $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
+
                 $pdo->prepare("INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)")
-                    ->execute([$nome, $email, $senha]);
+                ->execute([$nome, $email, $senhaHash]);
     
                 $sucesso = 'Cadastro realizado com sucesso!';
             }
