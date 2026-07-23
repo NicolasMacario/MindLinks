@@ -1,0 +1,4 @@
+# Impede a execução de scripts PHP dentro da pasta de uploads
+<FilesMatch "\.ph(p[3457]?|t|tml)$">
+    Require all denied
+</FilesMatch>

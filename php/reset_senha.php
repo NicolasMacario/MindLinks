@@ -41,11 +41,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenOk) {
     } else {
         $pdo = conectar();
 
+        $novaHash = password_hash($nova, PASSWORD_DEFAULT);
+
         $pdo->prepare("UPDATE usuarios SET senha = ? WHERE id = ?")
-            ->execute([$nova, $usuario['usuario_id']]);
+        ->execute([$novaHash, $usuario['usuario_id']]);
 
         $pdo->prepare("UPDATE recuperacao_senha SET usado = 1 WHERE token = ?")
-            ->execute([$tokenP]);
+        ->execute([$tokenP]);
 
         $sucesso = 'Senha redefinida com sucesso! Você já pode fazer login.';
         $tokenOk = false;

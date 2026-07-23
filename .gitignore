@@ -1,1 +1,4 @@
 .env
+php/uploads/perfil/*
+!php/uploads/perfil/.gitkeep
+!php/uploads/perfil/.htaccess
