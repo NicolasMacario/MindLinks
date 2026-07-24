@@ -13,8 +13,8 @@ if (empty($_SESSION['usuario'])) {
     exit;
 }
 
-$pdo        = conectar();
-$usuarioId  = (int) $_SESSION['usuario']['id'];
+$pdo       = conectar();
+$usuarioId = (int) $_SESSION['usuario']['id'];
 
 // Sempre busca os dados atuais no banco (a sessão pode estar desatualizada)
 $stmt = $pdo->prepare("SELECT id, nome, email, senha, foto_perfil FROM usuarios WHERE id = ? LIMIT 1");
@@ -28,7 +28,7 @@ if (!$usuario) {
 }
 
 /**
- * Envia o e-mail de confirmação de alteração (e-mail ou senha).
+ * Envia o e-mail de confirmação de alteração (e-mail atual, e-mail novo ou senha).
  */
 function enviarEmailConfirmacao(string $destino, string $nome, string $link, string $tipo): bool
 {
@@ -46,12 +46,19 @@ function enviarEmailConfirmacao(string $destino, string $nome, string $link, str
         $mail->addAddress($destino, $nome);
         $mail->isHTML(false);
 
-        if ($tipo === 'email') {
+        if ($tipo === 'email_atual') {
+            $mail->Subject = 'Confirme a solicitação de troca de e-mail - MIND LINKS';
+            $mail->Body    = "Olá, {$nome}!\n\n"
+                . "Recebemos uma solicitação para alterar o e-mail da sua conta MIND LINKS.\n\n"
+                . "Para continuar, confirme que foi você quem solicitou clicando no link abaixo (válido por 1 hora):\n\n{$link}\n\n"
+                . "Depois dessa confirmação, enviaremos outro link para o novo e-mail informado.\n\n"
+                . "Se não foi você quem solicitou, ignore este e-mail e sua conta continuará inalterada.";
+        } elseif ($tipo === 'email_novo') {
             $mail->Subject = 'Confirme seu novo e-mail - MIND LINKS';
             $mail->Body    = "Olá, {$nome}!\n\n"
-                . "Recebemos uma solicitação para alterar o e-mail da sua conta MIND LINKS para este endereço.\n\n"
-                . "Clique no link abaixo para confirmar a alteração (válido por 1 hora):\n\n{$link}\n\n"
-                . "Se não foi você quem solicitou, apenas ignore este e-mail.";
+                . "Confirmamos a solicitação de troca de e-mail no seu endereço atual.\n\n"
+                . "Para concluir, confirme este novo endereço clicando no link abaixo (válido por 1 hora):\n\n{$link}\n\n"
+                . "Se não foi você quem solicitou, ignore este e-mail.";
         } else {
             $mail->Subject = 'Confirme a troca de senha - MIND LINKS';
             $mail->Body    = "Olá, {$nome}!\n\n"
@@ -85,8 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare("UPDATE usuarios SET nome = ? WHERE id = ?")
                 ->execute([$novoNome, $usuarioId]);
 
-            $usuario['nome']              = $novoNome;
-            $_SESSION['usuario']['nome']  = $novoNome;
+            $usuario['nome']             = $novoNome;
+            $_SESSION['usuario']['nome'] = $novoNome;
             $sucesso = 'Nome atualizado com sucesso!';
         }
     }
@@ -116,7 +123,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $caminho     = $dir . '/' . $nomeArquivo;
 
                 if (move_uploaded_file($_FILES['foto']['tmp_name'], $caminho)) {
-                    // Remove a foto antiga, se existir
                     if (!empty($usuario['foto_perfil'])) {
                         $antiga = $dir . '/' . $usuario['foto_perfil'];
                         if (is_file($antiga)) {
@@ -137,6 +143,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // ───────────────────────────── E-MAIL ────────────────────────────
+    // 1ª etapa: valida senha + novo e-mail e manda link de confirmação
+    // para o e-mail ATUAL. Só depois de confirmado ali é que mandamos
+    // o segundo link para o e-mail NOVO (ver confirmar_alteracao.php).
     elseif ($acao === 'email') {
         $senhaAtual = $_POST['senha_atual_email'] ?? '';
         $novoEmail  = trim($_POST['novo_email'] ?? '');
@@ -155,7 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $erro = 'Este e-mail já está em uso por outra conta.';
             } else {
                 $pdo->prepare("UPDATE confirmacoes_pendentes SET usado = 1
-                                WHERE usuario_id = ? AND tipo = 'email' AND usado = 0")
+                                WHERE usuario_id = ? AND tipo IN ('email_atual', 'email_novo') AND usado = 0")
                     ->execute([$usuarioId]);
 
                 $token  = bin2hex(random_bytes(32));
@@ -163,15 +172,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $pdo->prepare("INSERT INTO confirmacoes_pendentes
                                 (usuario_id, tipo, valor_novo, token, expira_em)
-                                VALUES (?, 'email', ?, ?, ?)")
+                                VALUES (?, 'email_atual', ?, ?, ?)")
                     ->execute([$usuarioId, $novoEmail, $token, $expira]);
 
                 $link    = SITE_URL . '/confirmar_alteracao.php?token=' . $token;
-                $enviado = enviarEmailConfirmacao($novoEmail, $usuario['nome'], $link, 'email');
+                $enviado = enviarEmailConfirmacao($usuario['email'], $usuario['nome'], $link, 'email_atual');
 
                 if ($enviado) {
-                    $sucesso = "Enviamos um link de confirmação para {$novoEmail}. "
-                        . "Verifique a caixa de entrada para concluir a alteração.";
+                    $sucesso = "Enviamos um link de confirmação para o seu e-mail atual ({$usuario['email']}). "
+                        . "Confirme por lá para prosseguirmos com a troca.";
                 } else {
                     $erro = 'Não foi possível enviar o e-mail de confirmação. Tente novamente mais tarde.';
                 }
@@ -237,7 +246,7 @@ $avatarUrl = !empty($usuario['foto_perfil'])
 </head>
 <body>
 <div class="container-auth">
-    <div class="form-area profile-card">
+    <div class="form-area">
         <h1>Seu Perfil</h1>
 
         <?php if ($erro): ?>
@@ -248,89 +257,76 @@ $avatarUrl = !empty($usuario['foto_perfil'])
             <div class="alert alert-success"><?= htmlspecialchars($sucesso) ?></div>
         <?php endif; ?>
 
-        <!-- ─────────── Avatar + upload de foto ─────────── -->
-        <div class="profile-header">
-            <div class="avatar-wrapper">
-                <?php if ($avatarUrl): ?>
-                    <img src="<?= htmlspecialchars($avatarUrl) ?>" alt="Foto de perfil" class="avatar-img">
-                <?php else: ?>
-                    <i class="fa-solid fa-circle-user avatar-placeholder"></i>
-                <?php endif; ?>
 
-                <label for="foto" class="avatar-edit-btn" title="Alterar foto">
-                    <i class="fa-solid fa-camera"></i>
-                </label>
+        <?php if ($avatarUrl): ?>
+            <img src="<?= htmlspecialchars($avatarUrl) ?>" alt="Foto de perfil">
+        <?php else: ?>
+            <i class="fa-solid fa-circle-user"></i>
+        <?php endif; ?>
+
+        <form method="POST" enctype="multipart/form-data" id="formFoto">
+            <input type="hidden" name="acao" value="foto">
+            <input type="file" id="foto" name="foto" accept="image/png, image/jpeg, image/webp" hidden>
+            <label for="foto" style="color:#c699ff; font-size:0.85rem; cursor:pointer;">Alterar foto</label>
+        </form>
+
+        <p>
+            <?= htmlspecialchars($usuario['email']) ?>
+        </p>
+
+
+        <p>Nome</p>
+        <form method="POST">
+            <input type="hidden" name="acao" value="nome">
+            <div class="input-group">
+                <i class="fa-solid fa-user icon"></i>
+                <input type="text" name="nome" class="input" required
+                    value="<?= htmlspecialchars($usuario['nome']) ?>">
             </div>
+            <button type="submit" class="button-login">Salvar nome</button>
+        </form>
 
-            <form method="POST" enctype="multipart/form-data" id="formFoto">
-                <input type="hidden" name="acao" value="foto">
-                <input type="file" id="foto" name="foto" accept="image/png, image/jpeg, image/webp" hidden>
-            </form>
-
-            <p class="profile-current-email"><?= htmlspecialchars($usuario['email']) ?></p>
-        </div>
-
-        <!-- ─────────── Nome ─────────── -->
-        <div class="settings-section">
-            <h3><i class="fa-solid fa-user"></i> Nome</h3>
-            <form method="POST">
-                <input type="hidden" name="acao" value="nome">
-                <div class="input-group">
-                    <i class="fa-solid fa-user icon"></i>
-                    <input type="text" name="nome" class="input" required
-                        value="<?= htmlspecialchars($usuario['nome']) ?>">
-                </div>
-                <button type="submit" class="button-login button-sm">Salvar nome</button>
-            </form>
-        </div>
-
-        <div class="divider"></div>
-
-        <!-- ─────────── E-mail ─────────── -->
-        <div class="settings-section">
-            <h3><i class="fa-solid fa-envelope"></i> E-mail</h3>
-            <p class="section-hint">Você receberá um link de confirmação no <strong>novo</strong> e-mail.</p>
-            <form method="POST">
-                <input type="hidden" name="acao" value="email">
-                <div class="input-group">
-                    <i class="fa-solid fa-envelope icon"></i>
-                    <input type="email" name="novo_email" class="input" placeholder="Novo e-mail" required>
-                </div>
-                <div class="input-group">
-                    <i class="fa-solid fa-lock icon"></i>
-                    <input type="password" name="senha_atual_email" class="input" placeholder="Senha atual" required>
-                </div>
-                <button type="submit" class="button-login button-sm">Alterar e-mail</button>
-            </form>
-        </div>
-
-        <div class="divider"></div>
+        <p>E-mail</p>
+        <p>
+            Primeiro confirmamos no seu e-mail atual e depois no novo.
+        </p>
+        <form method="POST">
+            <input type="hidden" name="acao" value="email">
+            <div class="input-group">
+                <i class="fa-solid fa-envelope icon"></i>
+                <input type="email" name="novo_email" class="input" placeholder="Novo e-mail" required>
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-lock icon"></i>
+                <input type="password" name="senha_atual_email" class="input" placeholder="Senha atual" required>
+            </div>
+            <button type="submit" class="button-login">Alterar e-mail</button>
+        </form>
 
         <!-- ─────────── Senha ─────────── -->
-        <div class="settings-section">
-            <h3><i class="fa-solid fa-lock"></i> Senha</h3>
-            <p class="section-hint">Você receberá um link de confirmação no seu e-mail atual.</p>
-            <form method="POST">
-                <input type="hidden" name="acao" value="senha">
-                <div class="input-group">
-                    <i class="fa-solid fa-lock icon"></i>
-                    <input type="password" name="senha_atual_senha" class="input" placeholder="Senha atual" required>
-                </div>
-                <div class="input-group">
-                    <i class="fa-solid fa-lock icon"></i>
-                    <input type="password" id="nova_senha" name="nova_senha" class="input"
-                        placeholder="Nova senha (mín. 8 caracteres)" required>
-                    <i class="fa-solid fa-eye eye-icon" id="toggleNova"></i>
-                </div>
-                <div class="input-group">
-                    <i class="fa-solid fa-lock icon"></i>
-                    <input type="password" id="conf_senha" name="conf_senha" class="input"
-                        placeholder="Confirmar nova senha" required>
-                    <i class="fa-solid fa-eye eye-icon" id="toggleConf"></i>
-                </div>
-                <button type="submit" class="button-login button-sm">Alterar senha</button>
-            </form>
-        </div>
+        <p>Senha</p>
+        <p>
+            Você receberá um link de confirmação no seu e-mail atual.
+        </p>
+        <form method="POST">
+            <input type="hidden" name="acao" value="senha">
+            <div class="input-group">
+                <i class="fa-solid fa-lock icon"></i>
+                <input type="password" name="senha_atual_senha" class="input" placeholder="Senha atual" required>
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-lock icon"></i>
+                <input type="password" id="nova_senha" name="nova_senha" class="input" placeholder="Nova senha (mín. 8 caracteres)" required>
+                <i class="fa-solid fa-eye eye-icon" id="toggleNova"></i>
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-lock icon"></i>
+                <input type="password" id="conf_senha" name="conf_senha" class="input"
+                    placeholder="Confirmar nova senha" required>
+                <i class="fa-solid fa-eye eye-icon" id="toggleConf"></i>
+            </div>
+            <button type="submit" class="button-login">Alterar senha</button>
+        </form>
 
         <div class="links">
             <p><a href="principal.php">← Voltar para a tela inicial</a></p>
@@ -339,7 +335,6 @@ $avatarUrl = !empty($usuario['foto_perfil'])
 </div>
 
 <script>
-// Envia o formulário de foto automaticamente ao escolher um arquivo
 document.getElementById('foto').addEventListener('change', function () {
     if (this.files && this.files.length > 0) {
         document.getElementById('formFoto').submit();
