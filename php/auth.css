@@ -2,7 +2,23 @@
    AUTH.CSS - LOGIN E REGISTRO
    Paleta Original Kyubii: #7a3df5, #a64eff, #c699ff, #000000
    ═══════════════════════════════════════════════════════════════════ */
+:root {
+    --bg: #000000;
+    --text: #ffffff;
+    --card: rgba(0, 0, 0, 0.6);
+    --card-border: #7a3df5;
+    --titulo: #c699ff;
+    --texto-secundario: #aaaaaa;
+}
 
+html[data-tema="claro"] {
+    --bg: #f3effa;
+    --text: #2b2140;
+    --card: #ffffff;
+    --card-border: #c699ff;
+    --titulo: #7a3df5;
+    --texto-secundario: #6b5f85;
+}
 * {
     margin: 0;
     padding: 0;
@@ -11,10 +27,9 @@
 
 body {
     font-family: "Poppins", Arial, sans-serif;
-    background-color: #000000;
-    background-image: url('https://www.transparenttextures.com/patterns/black-felt.png');
+    background-color: var(--bg);
     background-repeat: repeat;
-    color: #ffffff;
+    color: var(--text);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -77,8 +92,8 @@ body {
     flex-direction: column;
     align-items: flex-start;
     width: 320px;
-    background: rgba(0, 0, 0, 0.6);
-    border: 2px solid #7a3df5;
+    background: var(--card);
+    border: 2px solid var(--card-border);
     border-radius: 20px;
     padding: 30px;
     box-shadow: 0 0 20px rgba(124, 61, 245, 0.3);
@@ -91,7 +106,7 @@ body {
     letter-spacing: 1px;
     width: 100%;
     text-align: center;
-    color: #c699ff;
+    color: var(--titulo);
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -213,7 +228,7 @@ body {
 
 .links p {
     font-size: 0.9rem;
-    color: #aaaaaa;
+    color: var(--texto-secundario);
 }
 
 .links a {
@@ -391,4 +406,5 @@ body {
     body {
         display: none;
     }
+
 }

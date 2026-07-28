@@ -1,7 +1,6 @@
 <?php
 // config/conexao.php
 
-$env = parse_ini_file(__DIR__ . '/../.env');
 
 define('DB_HOST', '127.0.0.1:3312');
 define('DB_USER', 'root');
