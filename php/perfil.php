@@ -1,32 +1,27 @@
 <?php
-session_start();
+require_once 'auth_check.php';
+$pdo = conectar();
 require_once 'conexao.php';
 require_once 'src/PHPMailer.php';
 require_once 'src/SMTP.php';
 require_once 'src/Exception.php';
-
+ 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-
-if (empty($_SESSION['usuario'])) {
-    header('Location: login.php');
-    exit;
-}
-
-$pdo       = conectar();
+ 
 $usuarioId = (int) $_SESSION['usuario']['id'];
-
+ 
 // Sempre busca os dados atuais no banco (a sessão pode estar desatualizada)
 $stmt = $pdo->prepare("SELECT id, nome, email, senha, foto_perfil FROM usuarios WHERE id = ? LIMIT 1");
 $stmt->execute([$usuarioId]);
 $usuario = $stmt->fetch();
-
+ 
 if (!$usuario) {
     session_destroy();
     header('Location: login.php');
     exit;
 }
-
+ 
 /**
  * Envia o e-mail de confirmação de alteração (e-mail atual, e-mail novo ou senha).
  */
@@ -45,7 +40,7 @@ function enviarEmailConfirmacao(string $destino, string $nome, string $link, str
         $mail->setFrom(SMTP_USER, SMTP_FROM_NAME);
         $mail->addAddress($destino, $nome);
         $mail->isHTML(false);
-
+ 
         if ($tipo === 'email_atual') {
             $mail->Subject = 'Confirme a solicitação de troca de e-mail - MIND LINKS';
             $mail->Body    = "Olá, {$nome}!\n\n"
@@ -66,24 +61,24 @@ function enviarEmailConfirmacao(string $destino, string $nome, string $link, str
                 . "Clique no link abaixo para confirmar a nova senha (válido por 1 hora):\n\n{$link}\n\n"
                 . "Se não foi você quem solicitou, ignore este e-mail e sua senha atual continuará válida.";
         }
-
+ 
         return $mail->send();
     } catch (Exception $e) {
         error_log('Erro ao enviar e-mail: ' . $mail->ErrorInfo);
         return false;
     }
 }
-
+ 
 $erro    = '';
 $sucesso = '';
-
+ 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $acao = $_POST['acao'] ?? '';
-
+ 
     // ───────────────────────────── NOME ─────────────────────────────
     if ($acao === 'nome') {
         $novoNome = trim($_POST['nome'] ?? '');
-
+ 
         if ($novoNome === '') {
             $erro = 'Informe um nome válido.';
         } elseif (mb_strlen($novoNome) > 100) {
@@ -91,13 +86,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $pdo->prepare("UPDATE usuarios SET nome = ? WHERE id = ?")
                 ->execute([$novoNome, $usuarioId]);
-
+ 
             $usuario['nome']             = $novoNome;
             $_SESSION['usuario']['nome'] = $novoNome;
             $sucesso = 'Nome atualizado com sucesso!';
         }
     }
-
+ 
     // ───────────────────────── FOTO DE PERFIL ────────────────────────
     elseif ($acao === 'foto') {
         if (empty($_FILES['foto']) || $_FILES['foto']['error'] === UPLOAD_ERR_NO_FILE) {
@@ -108,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $permitidos = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
             $finfo      = new finfo(FILEINFO_MIME_TYPE);
             $mime       = $finfo->file($_FILES['foto']['tmp_name']);
-
+ 
             if (!isset($permitidos[$mime])) {
                 $erro = 'Formato inválido. Envie uma imagem JPG, PNG ou WEBP.';
             } elseif ($_FILES['foto']['size'] > 3 * 1024 * 1024) {
@@ -118,10 +113,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!is_dir($dir)) {
                     mkdir($dir, 0755, true);
                 }
-
+ 
                 $nomeArquivo = 'user_' . $usuarioId . '_' . time() . '.' . $permitidos[$mime];
                 $caminho     = $dir . '/' . $nomeArquivo;
-
+ 
                 if (move_uploaded_file($_FILES['foto']['tmp_name'], $caminho)) {
                     if (!empty($usuario['foto_perfil'])) {
                         $antiga = $dir . '/' . $usuario['foto_perfil'];
@@ -129,10 +124,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             unlink($antiga);
                         }
                     }
-
+ 
                     $pdo->prepare("UPDATE usuarios SET foto_perfil = ? WHERE id = ?")
                         ->execute([$nomeArquivo, $usuarioId]);
-
+ 
                     $usuario['foto_perfil'] = $nomeArquivo;
                     $sucesso = 'Foto de perfil atualizada!';
                 } else {
@@ -141,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
-
+ 
     // ───────────────────────────── E-MAIL ────────────────────────────
     // 1ª etapa: valida senha + novo e-mail e manda link de confirmação
     // para o e-mail ATUAL. Só depois de confirmado ali é que mandamos
@@ -149,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif ($acao === 'email') {
         $senhaAtual = $_POST['senha_atual_email'] ?? '';
         $novoEmail  = trim($_POST['novo_email'] ?? '');
-
+ 
         if (!password_verify($senhaAtual, $usuario['senha'])) {
             $erro = 'Senha atual incorreta.';
         } elseif (!filter_var($novoEmail, FILTER_VALIDATE_EMAIL)) {
@@ -159,25 +154,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE email = ? AND id != ?");
             $stmt->execute([$novoEmail, $usuarioId]);
-
+ 
             if ($stmt->fetch()) {
                 $erro = 'Este e-mail já está em uso por outra conta.';
             } else {
                 $pdo->prepare("UPDATE confirmacoes_pendentes SET usado = 1
                                 WHERE usuario_id = ? AND tipo IN ('email_atual', 'email_novo') AND usado = 0")
                     ->execute([$usuarioId]);
-
+ 
                 $token  = bin2hex(random_bytes(32));
                 $expira = date('Y-m-d H:i:s', strtotime('+1 hour'));
-
+ 
                 $pdo->prepare("INSERT INTO confirmacoes_pendentes
                                 (usuario_id, tipo, valor_novo, token, expira_em)
                                 VALUES (?, 'email_atual', ?, ?, ?)")
                     ->execute([$usuarioId, $novoEmail, $token, $expira]);
-
+ 
                 $link    = SITE_URL . '/confirmar_alteracao.php?token=' . $token;
                 $enviado = enviarEmailConfirmacao($usuario['email'], $usuario['nome'], $link, 'email_atual');
-
+ 
                 if ($enviado) {
                     $sucesso = "Enviamos um link de confirmação para o seu e-mail atual ({$usuario['email']}). "
                         . "Confirme por lá para prosseguirmos com a troca.";
@@ -187,13 +182,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
-
+ 
     // ───────────────────────────── SENHA ─────────────────────────────
     elseif ($acao === 'senha') {
         $senhaAtual = $_POST['senha_atual_senha'] ?? '';
         $novaSenha  = $_POST['nova_senha'] ?? '';
         $confSenha  = $_POST['conf_senha'] ?? '';
-
+ 
         if (!password_verify($senhaAtual, $usuario['senha'])) {
             $erro = 'Senha atual incorreta.';
         } elseif (strlen($novaSenha) < 8) {
@@ -208,19 +203,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare("UPDATE confirmacoes_pendentes SET usado = 1
                             WHERE usuario_id = ? AND tipo = 'senha' AND usado = 0")
                 ->execute([$usuarioId]);
-
+ 
             $token         = bin2hex(random_bytes(32));
             $expira        = date('Y-m-d H:i:s', strtotime('+1 hour'));
             $novaSenhaHash = password_hash($novaSenha, PASSWORD_DEFAULT);
-
+ 
             $pdo->prepare("INSERT INTO confirmacoes_pendentes
                             (usuario_id, tipo, valor_novo, token, expira_em)
                             VALUES (?, 'senha', ?, ?, ?)")
                 ->execute([$usuarioId, $novaSenhaHash, $token, $expira]);
-
+ 
             $link    = SITE_URL . '/confirmar_alteracao.php?token=' . $token;
             $enviado = enviarEmailConfirmacao($usuario['email'], $usuario['nome'], $link, 'senha');
-
+ 
             if ($enviado) {
                 $sucesso = 'Enviamos um link de confirmação para o seu e-mail. '
                     . 'Clique nele para concluir a troca de senha.';
@@ -230,13 +225,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
-
+ 
 $avatarUrl = !empty($usuario['foto_perfil'])
     ? 'uploads/perfil/' . rawurlencode($usuario['foto_perfil'])
     : null;
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-tema="<?= htmlspecialchars($prefs['tema'] ?? 'escuro') ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -248,33 +243,33 @@ $avatarUrl = !empty($usuario['foto_perfil'])
 <div class="container-auth">
     <div class="form-area">
         <h1>Seu Perfil</h1>
-
+ 
         <?php if ($erro): ?>
             <div class="alert alert-error"><?= htmlspecialchars($erro) ?></div>
         <?php endif; ?>
-
+ 
         <?php if ($sucesso): ?>
             <div class="alert alert-success"><?= htmlspecialchars($sucesso) ?></div>
         <?php endif; ?>
-
-
+ 
+ 
         <?php if ($avatarUrl): ?>
             <img src="<?= htmlspecialchars($avatarUrl) ?>" alt="Foto de perfil">
         <?php else: ?>
             <i class="fa-solid fa-circle-user"></i>
         <?php endif; ?>
-
+ 
         <form method="POST" enctype="multipart/form-data" id="formFoto">
             <input type="hidden" name="acao" value="foto">
             <input type="file" id="foto" name="foto" accept="image/png, image/jpeg, image/webp" hidden>
             <label for="foto" style="color:#c699ff; font-size:0.85rem; cursor:pointer;">Alterar foto</label>
         </form>
-
+ 
         <p>
             <?= htmlspecialchars($usuario['email']) ?>
         </p>
-
-
+ 
+ 
         <p>Nome</p>
         <form method="POST">
             <input type="hidden" name="acao" value="nome">
@@ -285,7 +280,7 @@ $avatarUrl = !empty($usuario['foto_perfil'])
             </div>
             <button type="submit" class="button-login">Salvar nome</button>
         </form>
-
+ 
         <p>E-mail</p>
         <p>
             Primeiro confirmamos no seu e-mail atual e depois no novo.
@@ -302,7 +297,7 @@ $avatarUrl = !empty($usuario['foto_perfil'])
             </div>
             <button type="submit" class="button-login">Alterar e-mail</button>
         </form>
-
+ 
         <!-- ─────────── Senha ─────────── -->
         <p>Senha</p>
         <p>
@@ -327,20 +322,21 @@ $avatarUrl = !empty($usuario['foto_perfil'])
             </div>
             <button type="submit" class="button-login">Alterar senha</button>
         </form>
-
+ 
         <div class="links">
+            <p><a href="configuracoes.php">Configurações →</a></p>
             <p><a href="principal.php">← Voltar para a tela inicial</a></p>
         </div>
     </div>
 </div>
-
+ 
 <script>
 document.getElementById('foto').addEventListener('change', function () {
     if (this.files && this.files.length > 0) {
         document.getElementById('formFoto').submit();
     }
 });
-
+ 
 function toggle(inputId, iconId) {
     const input = document.getElementById(inputId);
     const icon  = document.getElementById(iconId);
@@ -357,3 +353,4 @@ document.getElementById('toggleConf')?.addEventListener('click', () => toggle('c
 </script>
 </body>
 </html>
+ 

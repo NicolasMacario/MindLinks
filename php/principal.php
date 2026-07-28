@@ -1,15 +1,18 @@
 <?php
-session_start();
+require_once 'auth_check.php';
+$pdo = conectar();
 
-if (empty($_SESSION['usuario'])) {
-    header('Location: login.php');
-    exit;
-}
+$stmt = $pdo->prepare("SELECT tema FROM preferencias_usuario WHERE usuario_id = ?");
+$stmt->execute([$_SESSION['usuario']['id']]);
+
+$prefs = $stmt->fetch();
+
+$tema = $prefs['tema'] ?? 'escuro';
 
 $usuario = $_SESSION['usuario'];
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-tema="<?= htmlspecialchars($tema) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -33,6 +36,11 @@ $usuario = $_SESSION['usuario'];
         </p>
 
         <a href="perfil.php" class="btn">Ir para a tela de perfil</a>
+        <a href="configuracoes.php" class="btn" style="margin-top:10px;">Configurações</a>
+
+        <div class="links">
+            <p><a href="logout.php">Sair</a></p>
+        </div>
     </div>
 </div>
 </body>
