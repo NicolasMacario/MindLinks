@@ -231,18 +231,18 @@ $avatarUrl = !empty($usuario['foto_perfil'])
     : null;
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR" data-tema="<?= htmlspecialchars($prefs['tema'] ?? 'escuro') ?>">
+<html lang="<?= htmlspecialchars($idioma ?? 'pt-BR') ?>" data-tema="<?= htmlspecialchars($tema ?? 'escuro') ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tela de Perfil - MIND LINKS</title>
+    <title><?= t('seu_perfil') ?> - MIND LINKS</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="auth.css">
 </head>
 <body>
 <div class="container-auth">
     <div class="form-area">
-        <h1>Seu Perfil</h1>
+        <h1><?= t('seu_perfil') ?></h1>
  
         <?php if ($erro): ?>
             <div class="alert alert-error"><?= htmlspecialchars($erro) ?></div>
@@ -262,7 +262,7 @@ $avatarUrl = !empty($usuario['foto_perfil'])
         <form method="POST" enctype="multipart/form-data" id="formFoto">
             <input type="hidden" name="acao" value="foto">
             <input type="file" id="foto" name="foto" accept="image/png, image/jpeg, image/webp" hidden>
-            <label for="foto" style="color:#c699ff; font-size:0.85rem; cursor:pointer;">Alterar foto</label>
+            <label for="foto"><?= t('alterar_foto') ?></label>
         </form>
  
         <p>
@@ -270,7 +270,7 @@ $avatarUrl = !empty($usuario['foto_perfil'])
         </p>
  
  
-        <p>Nome</p>
+        <p><?= t('nome') ?></p>
         <form method="POST">
             <input type="hidden" name="acao" value="nome">
             <div class="input-group">
@@ -278,54 +278,53 @@ $avatarUrl = !empty($usuario['foto_perfil'])
                 <input type="text" name="nome" class="input" required
                     value="<?= htmlspecialchars($usuario['nome']) ?>">
             </div>
-            <button type="submit" class="button-login">Salvar nome</button>
+            <button type="submit" class="button-login"><?= t('salvar_nome') ?></button>
         </form>
  
-        <p>E-mail</p>
+        <p><?= t('email') ?></p>
         <p>
-            Primeiro confirmamos no seu e-mail atual e depois no novo.
+            <?= t('email_confirma_info') ?>
         </p>
         <form method="POST">
             <input type="hidden" name="acao" value="email">
             <div class="input-group">
                 <i class="fa-solid fa-envelope icon"></i>
-                <input type="email" name="novo_email" class="input" placeholder="Novo e-mail" required>
+                <input type="email" name="novo_email" class="input" placeholder="<?= t('novo_email') ?>" required>
             </div>
             <div class="input-group">
                 <i class="fa-solid fa-lock icon"></i>
-                <input type="password" name="senha_atual_email" class="input" placeholder="Senha atual" required>
+                <input type="password" name="senha_atual_email" class="input" placeholder="<?= t('senha_atual') ?>" required>
             </div>
-            <button type="submit" class="button-login">Alterar e-mail</button>
+            <button type="submit" class="button-login"><?= t('alterar_email') ?></button>
         </form>
  
         <!-- ─────────── Senha ─────────── -->
-        <p>Senha</p>
+        <p><?= t('senha') ?></p>
         <p>
-            Você receberá um link de confirmação no seu e-mail atual.
+            <?= t('senha_confirma_info') ?>
         </p>
         <form method="POST">
             <input type="hidden" name="acao" value="senha">
             <div class="input-group">
                 <i class="fa-solid fa-lock icon"></i>
-                <input type="password" name="senha_atual_senha" class="input" placeholder="Senha atual" required>
+                <input type="password" name="senha_atual_senha" class="input" placeholder="<?= t('senha_atual') ?>" required>
             </div>
             <div class="input-group">
                 <i class="fa-solid fa-lock icon"></i>
-                <input type="password" id="nova_senha" name="nova_senha" class="input" placeholder="Nova senha (mín. 8 caracteres)" required>
+                <input type="password" id="nova_senha" name="nova_senha" class="input" placeholder="<?= t('nova_senha') ?>" required>
                 <i class="fa-solid fa-eye eye-icon" id="toggleNova"></i>
             </div>
             <div class="input-group">
                 <i class="fa-solid fa-lock icon"></i>
-                <input type="password" id="conf_senha" name="conf_senha" class="input"
-                    placeholder="Confirmar nova senha" required>
+                <input type="password" id="conf_senha" name="conf_senha" class="input" placeholder="<?= t('confirmar_nova_senha') ?>" required>
                 <i class="fa-solid fa-eye eye-icon" id="toggleConf"></i>
             </div>
-            <button type="submit" class="button-login">Alterar senha</button>
+            <button type="submit" class="button-login"><?= t('alterar_senha') ?></button>
         </form>
  
         <div class="links">
-            <p><a href="configuracoes.php">Configurações →</a></p>
-            <p><a href="principal.php">← Voltar para a tela inicial</a></p>
+            <p><a href="configuracoes.php"><?= t('configuracoes') ?> →</a></p>
+            <p><a href="principal.php"><?= t('voltar_inicio') ?></a></p>
         </div>
     </div>
 </div>
