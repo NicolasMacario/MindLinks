@@ -9,6 +9,7 @@
 // outros navegadores/aparelhos, e não só no atual.
 
 require_once __DIR__ . '/conexao.php';
+require_once __DIR__ . '/lang.php';
  
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -36,11 +37,19 @@ if (!$stmt->fetch()) {
 $pdo->prepare("UPDATE sessoes_ativas SET ultimo_acesso = NOW() WHERE usuario_id = ? AND token_sessao = ?")
     ->execute([$_SESSION['usuario']['id'], $_SESSION['usuario']['token_sessao']]);
     $stmt = $pdo->prepare("
-    SELECT tema
+    SELECT tema, idioma
     FROM preferencias_usuario
     WHERE usuario_id = ?
     LIMIT 1
 ");
+
+$stmt->execute([$_SESSION['usuario']['id']]);
+
+$prefs = $stmt->fetch();
+
+$tema = $prefs['tema'] ?? 'escuro';
+$idioma = $prefs['idioma'] ?? 'pt-BR';
+definirIdioma($idioma);
 
 $stmt->execute([$_SESSION['usuario']['id']]);
 

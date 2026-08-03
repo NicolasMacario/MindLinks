@@ -37,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ->execute([$usuarioId, $tema, $notificacoesEmail, $idioma]);
  
         $prefs   = ['tema' => $tema, 'notificacoes_email' => $notificacoesEmail, 'idioma' => $idioma];
+        definirIdioma($idioma);
         $sucesso = 'Preferências salvas com sucesso!';
     }
  
@@ -84,11 +85,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
  
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR" data-tema="<?= htmlspecialchars($prefs['tema']) ?>">
+<html lang="<?= htmlspecialchars($prefs['idioma']) ?>" data-tema="<?= htmlspecialchars($prefs['tema']) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configurações - MIND LINKS</title>
+    <title><?= t('config_titulo') ?> - MIND LINKS</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="auth.css">
 
@@ -96,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
 <div class="container-auth">
     <div class="form-area config-page">
-        <h1>Configurações</h1>
+        <h1><?= t('config_titulo') ?></h1>
  
         <?php if ($erro): ?>
             <div class="alert alert-error"><?= htmlspecialchars($erro) ?></div>
@@ -108,14 +109,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
  
         <!-- ─────────────────────── Preferências ─────────────────────── -->
         <div class="config-section">
-            <h2>Preferências</h2>
-            <p class="descricao">Personalize a aparência e as notificações da sua conta.</p>
- 
+            <h2><?= t('preferencias') ?></h2>
+            <p class="descricao"><?= t('preferencias_desc') ?></p>
             <form method="POST">
                 <input type="hidden" name="acao" value="preferencias">
  
                 <div class="campo-linha">
-                    <label for="tema">Tema claro</label>
+                    <label for="tema"><?= t('tema_claro') ?></label>
                     <label class="switch">
                         <input type="checkbox" id="tema" name="tema" value="claro"
                             <?= $prefs['tema'] === 'claro' ? 'checked' : '' ?>>
@@ -124,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
  
                 <div class="campo-linha">
-                    <label for="notificacoes_email">Notificações por e-mail</label>
+                    <label for="notificacoes_email"><?= t('notif_email') ?></label>
                     <label class="switch">
                         <input type="checkbox" id="notificacoes_email" name="notificacoes_email"
                             <?= $prefs['notificacoes_email'] ? 'checked' : '' ?>>
@@ -133,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
  
                 <div style="margin-bottom:16px;">
-                    <label for="idioma" style="display:block; margin-bottom:6px; font-size:0.92rem;">Idioma</label>
+                    <label for="idioma"><?= t('idioma') ?></label>
                     <select name="idioma" id="idioma" class="input">
                         <option value="pt-BR" <?= $prefs['idioma'] === 'pt-BR' ? 'selected' : '' ?>>Português (Brasil)</option>
                         <option value="en-US" <?= $prefs['idioma'] === 'en-US' ? 'selected' : '' ?>>English (US)</option>
@@ -141,30 +141,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </select>
                 </div>
  
-                <button type="submit" class="button-login">Salvar preferências</button>
+                <button type="submit" class="button-login"><?= t('salvar_preferencias') ?></button>
             </form>
         </div>
  
         <!-- ─────────────────────── Excluir conta ─────────────────────── -->
         <div class="config-section" style="border-color: rgba(255, 107, 107, 0.35);">
-            <h2 style="color:#ff6b6b;">Excluir conta</h2>
+            <h2 style="color:#ff6b6b;"><?= t('excluir_conta') ?></h2>
             <p class="descricao">
-                Essa ação é permanente. Todos os seus dados, incluindo foto de perfil e preferências, serão apagados.
+                <?= t('excluir_conta_desc') ?>
             </p>
  
-            <form method="POST" onsubmit="return confirm('Tem certeza que deseja excluir sua conta? Essa ação não pode ser desfeita.');">
+            <form method="POST" onsubmit="return confirm('<?= addslashes(t('excluir_confirm_js')) ?>');">
                 <input type="hidden" name="acao" value="excluir_conta">
                 <div class="input-group">
                     <i class="fa-solid fa-lock icon"></i>
-                    <input type="password" name="senha_confirma" class="input" placeholder="Confirme sua senha" required>
+                    <input type="password" name="senha_confirma" class="input" placeholder="<?= t('confirme_senha') ?>" required>
                 </div>
-                <button type="submit" class="btn-perigo">Excluir minha conta</button>
+                <button type="submit" class="btn-perigo"><?= t('excluir_minha_conta') ?></button>
             </form>
         </div>
  
         <div class="links">
-            <p><a href="perfil.php">← Voltar para o perfil</a></p>
-            <p><a href="logout.php">Sair</a></p>
+            <p><a href="perfil.php"><?= t('voltar_perfil') ?></a></p>
+            <p><a href="logout.php"><?= t('sair') ?></a></p>
         </div>
     </div>
 </div>
