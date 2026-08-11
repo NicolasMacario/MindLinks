@@ -44,10 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenOk) {
         $novaHash = password_hash($nova, PASSWORD_DEFAULT);
 
         $pdo->prepare("UPDATE usuarios SET senha = ? WHERE id = ?")
-        ->execute([$novaHash, $usuario['usuario_id']]);
+            ->execute([$novaHash, $usuario['usuario_id']]);
 
         $pdo->prepare("UPDATE recuperacao_senha SET usado = 1 WHERE token = ?")
-        ->execute([$tokenP]);
+            ->execute([$tokenP]);
 
         $sucesso = 'Senha redefinida com sucesso! Você já pode fazer login.';
         $tokenOk = false;
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenOk) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-tema="claro">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -64,62 +64,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenOk) {
     <link rel="stylesheet" href="auth.css">
 </head>
 <body>
-<div class="container-auth">
- 
-    <div class="logo-area">
-        <div class="logo-title">MIND LINKS</div>
-        <img src="img/logoBranco.png" alt="Logo" class="logo">
-        <div class="logo-subtitle">MIND LINKS</div>
-    </div>
- 
-    <div class="form-area">
-        <h1>NOVA SENHA</h1>
- 
+
+<div class="container-split">
+
+    <div class="lado-esquerda">
+        <h2>NOVA SENHA</h2>
+
         <?php if ($sucesso): ?>
             <div class="alert alert-success"><?= htmlspecialchars($sucesso) ?></div>
-            <div class="links"><p><a href="login.php">Ir para o login →</a></p></div>
- 
+            <h3><a href="login.php">Ir para o login →</a></h3>
+
         <?php elseif ($erro && !$tokenOk && !$usuario): ?>
             <div class="alert alert-error"><?= htmlspecialchars($erro) ?></div>
-            <div class="links"><p><a href="esqueceu_senha.php">Solicitar novo link</a></p></div>
- 
+            <h3><a href="esqueci-senha.php">Solicitar novo link</a></h3>
+
         <?php else: ?>
-            <p style="color:#aaaaaa; font-size:0.9rem; margin-bottom:20px; text-align:center;">
-                Olá, <strong style="color:#c699ff;"><?= htmlspecialchars($usuario['nome']) ?></strong>!
+            <p>
+                Olá, <strong style="color:#8151c1;"><?= htmlspecialchars($usuario['nome']) ?></strong>!
                 Crie uma nova senha para sua conta.
             </p>
- 
+
             <?php if ($erro): ?>
                 <div class="alert alert-error"><?= htmlspecialchars($erro) ?></div>
             <?php endif; ?>
- 
+
             <form method="POST">
                 <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
- 
+
                 <div class="input-group">
                     <i class="fa-solid fa-lock icon"></i>
                     <input type="password" id="nova_senha" name="nova_senha" class="input"
                         placeholder="Nova senha (mín. 8 caracteres)" required autofocus>
                     <i class="fa-solid fa-eye eye-icon" id="toggleNova"></i>
                 </div>
- 
+
                 <div class="input-group">
                     <i class="fa-solid fa-lock icon"></i>
                     <input type="password" id="conf_senha" name="conf_senha" class="input"
                         placeholder="Confirmar nova senha" required>
                     <i class="fa-solid fa-eye eye-icon" id="toggleConf"></i>
                 </div>
- 
-                <button type="submit" class="button-login">Salvar nova senha</button>
+
+                <button type="submit" class="btn-primario">Salvar nova senha</button>
             </form>
- 
-            <div class="links">
-                <p><a href="login.php">← Cancelar e voltar ao login</a></p>
-            </div>
+
+            <h3><a href="login.php">← Cancelar e voltar ao login</a></h3>
         <?php endif; ?>
     </div>
+
+    <div class="lado-direita">
+        <h1>MIND LINKS</h1>
+        <p>Escolha uma senha forte para manter sua conta segura.</p>
+    </div>
+
 </div>
- 
+
 <script>
 function toggle(inputId, iconId) {
     const input = document.getElementById(inputId);

@@ -1,14 +1,9 @@
 <?php
 require_once 'auth_check.php';
-$pdo = conectar();
-
-$stmt = $pdo->prepare("SELECT tema, idioma FROM preferencias_usuario WHERE usuario_id = ?");
-$stmt->execute([$_SESSION['usuario']['id']]);
-
-$prefs = $stmt->fetch();
-
-$tema   = $prefs['tema']   ?? 'escuro';
-$idioma = $prefs['idioma'] ?? 'pt-BR';
+/** @var PDO $pdo */
+/** @var string $tema */
+/** @var string $idioma */
+// $pdo, $tema e $idioma já vêm prontos do auth_check.php
 
 $usuario = $_SESSION['usuario'];
 ?>
@@ -22,27 +17,38 @@ $usuario = $_SESSION['usuario'];
     <link rel="stylesheet" href="auth.css">
 </head>
 <body>
-<div class="container-auth">
-    <div class="form-area">
+
+<nav class="navbar">
+    <div class="logo">Mind Links</div>
+    <ul class="nav-links">
+        <li><a href="principal.php" class="ativo"><?= t('inicio') ?></a></li>
+        <li><a href="perfil.php"><?= t('seu_perfil') ?></a></li>
+        <li><a href="configuracoes.php"><?= t('configuracoes') ?></a></li>
+    </ul>
+</nav>
+
+<div class="container">
+    <div class="box">
         <h1><?= t('bem_vindo') ?></h1>
 
-        <i class="fa-solid fa-circle-user"></i>
+        <i class="fa-solid fa-circle-user" style="font-size:5rem; color:#7a3df5; margin:20px 0;"></i>
 
-        <p>
+        <p style="color:#c699ff; font-size:1.2rem; font-weight:600; margin-bottom:8px;">
             <?= htmlspecialchars($usuario['nome']) ?>
         </p>
 
-        <p style="color:#aaaaaa; font-size:0.9rem; margin-bottom:30px;">
+        <p style="margin-bottom:30px;">
             <?= htmlspecialchars($usuario['email']) ?>
         </p>
 
-        <a href="perfil.php" class="btn"><?= t('ir_perfil') ?></a>
-        <a href="configuracoes.php" class="btn"><?= t('configuracoes') ?></a>
+        <a href="perfil.php" class="btn-inicio"><?= t('ir_perfil') ?></a>
+        <a href="configuracoes.php" class="btn-inicio" style="margin-top:10px;"><?= t('configuracoes') ?></a>
 
         <div class="links">
             <p><a href="logout.php"><?= t('sair') ?></a></p>
         </div>
     </div>
 </div>
+
 </body>
 </html>

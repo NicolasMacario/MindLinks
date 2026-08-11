@@ -1,12 +1,4 @@
 <?php
-// auth_check.php
-// Inclua este arquivo no topo de QUALQUER página que exija login
-// (substitui o antigo padrão "session_start(); if (empty($_SESSION['usuario']))...").
-//
-// Diferente do padrão antigo, aqui a sessão é validada contra a tabela
-// "sessoes_ativas" no banco. Isso é o que permite que "Sair de todos os
-// dispositivos" (em configuracoes.php) realmente derrube o acesso em
-// outros navegadores/aparelhos, e não só no atual.
 
 require_once __DIR__ . '/conexao.php';
 require_once __DIR__ . '/lang.php';

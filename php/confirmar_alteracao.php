@@ -56,7 +56,6 @@ if (!$token) {
         $tipo     = 'erro';
     } else {
         // ── Etapa 1: confirmação feita no e-mail ATUAL ──
-        // Marca essa etapa como usada e dispara um novo link para o e-mail NOVO.
         if ($pendente['tipo'] === 'email_atual') {
             $pdo->prepare("UPDATE confirmacoes_pendentes SET usado = 1 WHERE id = ?")
                 ->execute([$pendente['id']]);
@@ -65,7 +64,6 @@ if (!$token) {
             $stmtUser->execute([$pendente['usuario_id']]);
             $dono = $stmtUser->fetch();
 
-            // Confere de novo se o e-mail novo continua livre
             $check = $pdo->prepare("SELECT id FROM usuarios WHERE email = ? AND id != ?");
             $check->execute([$pendente['valor_novo'], $pendente['usuario_id']]);
 
@@ -143,7 +141,7 @@ if (!$token) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-tema="claro">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -152,16 +150,10 @@ if (!$token) {
     <link rel="stylesheet" href="auth.css">
 </head>
 <body>
-<div class="container-auth">
 
-    <div class="logo-area">
-        <div class="logo-title">MIND LINKS</div>
-        <img src="img/logoBranco.png" alt="Logo" class="logo">
-        <div class="logo-subtitle">MIND LINKS</div>
-    </div>
-
-    <div class="form-area" style="text-align:center; align-items:center;">
-        <h1>Confirmação</h1>
+<div class="container">
+    <div class="box">
+        <h2>Confirmação</h2>
 
         <?php if ($tipo === 'sucesso'): ?>
             <i class="fa-solid fa-circle-check" style="font-size:3rem; color:#5ffe6f; margin-bottom:15px;"></i>
@@ -178,5 +170,6 @@ if (!$token) {
         </div>
     </div>
 </div>
+
 </body>
 </html>
