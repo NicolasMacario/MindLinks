@@ -53,6 +53,8 @@ $GLOBALS['_traducoes'] = [
 
         'email_assunto_senha'       => 'Confirme a troca de senha - MIND LINKS',
         'email_corpo_senha'         => "Olá, %s!\n\nRecebemos uma solicitação para alterar a senha da sua conta MIND LINKS.\n\nClique no link abaixo para confirmar a nova senha (válido por 1 hora):\n\n%s\n\nSe não foi você quem solicitou, ignore este e-mail e sua senha atual continuará válida.",
+        'remover_foto'              => 'Remover foto',
+        'foto_removida'             => 'Foto removida com sucesso!',
     ],
 
     'en-US' => [
@@ -104,6 +106,8 @@ $GLOBALS['_traducoes'] = [
 
         'email_assunto_senha'       => 'Confirm your password change - MIND LINKS',
         'email_corpo_senha'         => "Hi, %s!\n\nWe received a request to change the password on your MIND LINKS account.\n\nClick the link below to confirm the new password (valid for 1 hour):\n\n%s\n\nIf you didn't request this, ignore this email and your current password will remain valid.",
+        'remover_foto'              => 'Remove photo',
+        'foto_removida'             => 'Photo removed successfully!',
     ],
 
     'es-ES' => [
@@ -155,6 +159,8 @@ $GLOBALS['_traducoes'] = [
 
         'email_assunto_senha'       => 'Confirma el cambio de contraseña - MIND LINKS',
         'email_corpo_senha'         => "¡Hola, %s!\n\nRecibimos una solicitud para cambiar la contraseña de tu cuenta MIND LINKS.\n\nHaz clic en el enlace de abajo para confirmar la nueva contraseña (válido por 1 hora):\n\n%s\n\nSi no fuiste tú quien lo solicitó, ignora este correo y tu contraseña actual seguirá siendo válida.",
+        'remover_foto'              => 'Quitar foto',
+        'foto_removida'             => '¡Foto eliminada con éxito!',
     ],
 ];
 

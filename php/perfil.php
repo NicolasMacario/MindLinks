@@ -127,6 +127,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+    elseif ($acao === 'excluir_foto') {
+        if (!empty($usuario['foto_perfil'])) {
+            $caminho = __DIR__ . '/uploads/perfil/' . $usuario['foto_perfil'];
+            if (is_file($caminho)) {
+                unlink($caminho);
+            }
+            $pdo->prepare("UPDATE usuarios SET foto_perfil = NULL WHERE id = ?")
+                ->execute([$usuarioId]);
+            $usuario['foto_perfil'] = null;
+        }
+        $sucesso = t('foto_removida');
+    }
 
     // ───────────────────────────── E-MAIL ────────────────────────────
     elseif ($acao === 'email') {
@@ -264,6 +276,14 @@ $avatarUrl = !empty($usuario['foto_perfil'])
                     <?= t('alterar_foto') ?>
                 </label>
             </form>
+            <?php if ($avatarUrl): ?>
+                <form method="POST" style="display:inline;">
+                    <input type="hidden" name="acao" value="excluir_foto">
+                    <button type="submit" style="background:none; border:none; color:#ff8b8b; font-size:.85rem; cursor:pointer;">
+                        <?= t('remover_foto') ?>
+                    </button>
+                </form>
+            <?php endif; ?>
 
             <p style="margin:6px 0 0;"><?= htmlspecialchars($usuario['email']) ?></p>
         </div>
